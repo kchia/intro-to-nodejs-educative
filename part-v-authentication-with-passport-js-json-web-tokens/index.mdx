@@ -1,0 +1,585 @@
+---
+title: Introduction to Node.js Part V - Authentication with Passport.js & JSON Web Tokens
+date: 2021-08-16
+description: Passport.js is an authentication middleware for Node.js. JWT (JSON Web Tokens) is a lightweight and secure approach to transferring state from the client to the server in a REST framework. In this tutorial, learn how to use Passport.js and JWT to implement signup and login functionalities for an Express API.
+tags:
+  - Node.js
+  - JavaScript
+  - Express
+  - Passport.js
+  - JWT
+  - intermediate
+  - tutorial
+  - intro-to-node-js
+slug: blog/introduction-to-node-js-part-v-authentication-with-passport-js-json-web-tokens
+---
+
+## Introduction
+
+Welcome to the **fifth** part of the six-part [Introduction to Node.js tutorial series](/blog/introduction-to-node-js-tutorial-series-overview). By the end of this tutorial, you will be able to:
+
+- implement signup and login functionalities for our `Express Recipes` API
+- authenticate application users' requests using [Passport.js](passportjs.org) and [JSON Web Tokens](https://jwt.io/)
+
+## Tutorial Outline
+
+- Passport.js Overview
+- Complete Example
+- JSON Web Tokens Overview
+- Integrating Passport.js & JSON Web Tokens into Our API
+  - Task 1: Install Dependencies
+  - Task 2: Set up Files for User Authentication Routes
+  - Task 3: Configure the Passport.js JWT Strategy
+  - Task 4: Create the `users` Service
+  - Task 5: Create the `users` Controller
+  - Task 6: Create the `users` Router
+  - Task 7 (**_CHALLENGE_**): Secure Routes for the `recipes` Resource
+  - Task 8: Test Privileged Routes with Postman
+  - **_BONUS_**: Logout
+- Additional Resources
+- Review
+- Key Takeaways
+- What's next
+
+## Passport.js Overview
+
+From [Passport.js](http://www.passportjs.org/docs/):
+
+---
+
+"_Passport is authentication middleware for Node. It is designed to serve a singular purpose: authenticate requests. When writing modules, encapsulation is a virtue, so Passport delegates all other functionality to the application. This separation of concerns keeps code clean and maintainable, and makes Passport extremely easy to integrate into an application._
+
+_In modern web applications, authentication can take a variety of forms. Traditionally, users log in by providing a username and password. With the rise of social networking, single sign-on using an OAuth provider such as Facebook or Twitter has become a popular authentication method. Services that expose an API often require token-based credentials to protect access._"
+
+---
+
+Passport.js offers a wide variety of authentication mechanisms (known as "strategies") as individually-packaged modules. Currently, more than [500 authentication strategies exist in the Passport.js ecosystem](http://www.passportjs.org/packages/). Strategies range from verifying a username and password, delegated authentication using OAuth or federated authentication using OpenID.
+
+In this section, you'll be using the [Passport.js authentication strategy based on JSON Web Tokens](http://www.passportjs.org/packages/passport-jwt/) to add authentication to your `Express Recipes` API.
+
+## Starter Code
+
+You can work off of the repo that you used in the [previous tutorial](/blog/introduction-to-node-js-part-iv-building-a-restful-api-with-express). Or you can fork and clone [this repo](https://github.com/intro-to-nodejs/express-recipes-complete).
+
+## Complete Example
+
+A Git branch with the complete code for this tutorial is available [here](https://github.com/intro-to-nodejs/express-recipes-complete/tree/express-recipes-auth-complete).
+
+## JSON Web Tokens Overview
+
+In [REST](https://restfulapi.net/) architectures, client-server interactions are typically **stateless.** A **stateless** server does not store any history or state about the client session. After all, server-based sessions are often costly to implement and don't scale well.
+
+Instead, session state is often stored on the client (e.g., in a browser's cookie), so the client is responsible for transferring all the information needed to execute a request to the server.
+
+[JWT (JSON Web Tokens)](https://jwt.io/) is a lightweight and secure approach to transfer state from the client to the server in a REST framework. JWT (pronounced "JOT") is an open-standard authentication strategy that relies on the exchange of [encoded and crytopgraphically signed JSON strings](https://jwt.io/introduction/) between client and server.
+
+JWTs allow you to delegate authentication logic to an authorization server. In fact, you can delegate login/signup of a cluster of applications to a single Authorization server.
+
+To understand how JWT works, let's consider a typical login flow that uses JWT-based authentication:
+
+![JWT-Based Authentication](./jwt-based-authentication.jpg)
+
+1. The client makes a HTTP request to the authorization server, sending along the user's login credentials (e.g., email and password).
+
+1. The authorization server validates the user's credentials. If authentication is successful, the server sends a JSON response to the client that includes a JWT access token.
+
+1. The client receives the JWT and [stores it in the browser (e.g., cookie)](<https://blog.logrocket.com/jwt-authentication-best-practices/#:~:text=A%20JWT%20needs%20to%20be,storage%20(or%20session%20storage).>).
+
+1. The next time the client makes a HTTP request to a route that requires authentication, it will first attach the JWT to the request's Authorization headers before sending the request to the application server that's hosting the protected API.
+
+1. On receiving the request, the application server extracts the JWT from the request and verifies the embedded signature. If the verification is successful, the server fulfills the request. Otherwise, the request is blocked and the user will receive an error denying their request to access the resource on the application server.
+
+As you can see, the application server does not have to keep access tokens in-memory in between requests, so it can be `stateless`.
+
+JWTs function like temporary user credentials so the user does not have to repeatedly provide their password to gain access to resources on a server.
+
+Later on in the tutorial, you'll take a look at what a JWT access token actually looks like.
+
+## Integrating Passport.js & JSON Web Tokens into Express Recipes API
+
+Let's authenticate our users using JWT before allowing them access to privileged routes in the `Express Recipes` API! To support user authentication, you will need to implement routes to handle user signup and login.
+
+As part of the signup process, the user will typically provide a password that the user can use to log into the application going forward. As a best practice, the user's password will need to be encrypted before it is stored in the database. You can use the `bcrypt` library to do that.
+
+Then, during the login process, the server will need to validate the user's credentials and generate as well as validate JWTs accordingly. You can use the popular `jsonwebtoken` library to do that.
+
+The `passport` and `passport-jwt` libraries will allow you to implement a Passport.js authentication strategy based on JSON Web Tokens.
+
+For simplicity, you will implement the JWT authentication mechanism directly in the `Express Recipes` application server, rather than in a separate authorization server.
+
+### Task 1: Install Dependencies
+
+1. Navigate to your project folder.
+
+1. Install the following dependencies:
+
+   - [bcrypt](https://www.npmjs.com/package/bcrypt)
+   - [express](https://expressjs.com/)
+   - [jsonwebtoken](https://www.npmjs.com/package/jsonwebtoken)
+   - [passport](http://www.passportjs.org/)
+   - [passport-jwt](http://www.passportjs.org/packages/passport-jwt/)
+   - [dotenv](https://www.npmjs.com/package/dotenv)
+
+   ```
+   $ npm install --save bcrypt express jsonwebtoken passport passport-jwt dotenv
+   ```
+
+### Task 2: Set up Files for User Authentication Routes
+
+1. In the [previous tutorial](/blog/introduction-to-node-js-part-iv-building-a-restful-api-with-express), you set up a router, controller, and service for the `recipes` resource in the `Express Recipes` API. Let's follow a similar pattern to organize our user authentication logic:
+
+   ```
+   $ touch src/routers/users.js src/services/users.js db/users.json src/controllers/users.js
+   ```
+
+1. Create a new folder to store middleware functions and within it, create a file called `auth.js`:
+
+   ```
+   $ mkdir src/middleware
+   $ touch src/middleware/auth.js
+   ```
+
+   Later on, you will configure the Passport.js strategy inside `src/middleware/auth.js`.
+
+1. You will be storing the users data in `db/users.json`. **Note that this is not a robust database solution since there's no built-in data validation, but it is sufficient for demonstration purposes.**
+
+   Add a user to the file to serve as an example of what an entry in the file might look like:
+
+   ```json:title=db/users.json
+   [
+     {
+       "id": 1,
+       "name": "Hou",
+       "email": "hou@mail.com",
+       "password": "$2b$10$u2r3EK7.p4l9bzQd74nGNepvIHw5gF84j4Dy6/kJmtNR4OC.A5t5O"
+     }
+   ]
+   ```
+
+   Notice that the user's `password` is hashed, for security reasons. Later on, you will learn how to use `bcrypt` to hash a user's password before storing it in the database.
+
+1. Create a `.env` file in the project root folder to store the JWT-related configuration variables:
+
+   ```title:.env
+   JWT_SECRET=##%%MyS3cr3tK3Y%%##
+   ```
+
+   `JWT_SECRET` will be used to create a signature for signing and validating the JWTs.
+
+   Keep in mind that since the `.env` file typically contains sensitive information (e.g., API secret keys), you will **not** want to commit it to Git, so it should be added to the `.gitignore` file.
+
+   You will use the `JWT_SECRET` variable later on to configure the Passport.js strategy.
+
+### Task 3: Configure the Passport.js JWT Strategy
+
+1. Before Passport.js can authenticate a request, you must set up the Passport.js authentication middleware and configure Passport.js to use the JWT authentication strategy. Add the following code to `src/middleware/auth.js`:
+
+   ```js:title=src/middleware/auth.js
+   // import the libraries and classes we need
+   require("dotenv").config(); // loads the environment variables into process.env
+   const passport = require("passport");
+   const { Strategy, ExtractJwt } = require("passport-jwt");
+
+   const { find: findUser } = require("../services/users");
+
+   const { JWT_SECRET } = process.env;
+
+   // Create a new instance of the JWT Passport.js strategy
+   const strategy = new Strategy(
+     // Pass an object literal as the first argument
+     // to new Strategy to control how a token is extracted from the request
+     {
+       // Extract the 'bearer' token from the authorization header,
+       // where the encoded JWT string is stored
+       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+       // A string for verifying the token's signature
+       secretOrKey: JWT_SECRET,
+     },
+     async (jwtPayload, done) => {
+       try {
+         // jwtPayload contains the decoded JWT payload,
+         // which includes the user's id
+         // Find that user in the database
+         const user = await findUser({ id: jwtPayload.id });
+
+         if (!user) {
+           const err = new Error("User not found");
+           err.statusCode = 404;
+           throw err;
+         }
+
+         // done is an error-first callback with signature done(error, user, info)
+         // pass the found user to the route handler
+         done(null, user);
+       } catch (error) {
+         done(error);
+       }
+     }
+   );
+
+   // Register the strategy configured above so that Passport.js can use it authentication
+   passport.use(strategy);
+
+   // A middleware for initializing passport
+   const initialize = () => {
+     return passport.initialize();
+   };
+
+   // Add this middleware to privileged routes later on
+   const authenticate = () => {
+      // Since you are using JWTs, you don't need to create a session, so set it to false here.
+      // Otherwise, Passport.js will attempt to create a session.
+     return passport.authenticate("jwt", { session: false });
+   };
+
+   module.exports = {
+     initialize,
+     authenticate,
+   };
+   ```
+
+1. In `src/index.js`, import and load the `auth` middleware when starting the server, like this:
+
+   ```js:title:src/index.js {7,24}
+   const express = require("express");
+   const path = require("path");
+   const cors = require("cors");
+
+   const recipesRouter = require("./routers/recipes");
+   const { handleError } = require("./utils/error");
+   const auth = require('./middleware/auth.js');
+
+   const app = express();
+
+   app.use(cors());
+
+   app.use((req, res, next) => {
+     const { method, path } = req;
+     console.log(
+       `New request to: ${method} ${path} at ${new Date().toISOString()}`
+     );
+     next();
+   });
+
+   app.use(express.json());
+   app.use(express.urlencoded({ extended: true }));
+
+   app.use(auth.initialize());
+
+   app.get("/", (req, res) => {
+     res.redirect("/api/v1/recipes");
+   });
+
+   app.use("/api/v1/recipes", recipesRouter);
+
+   app.use(handleError);
+
+   const port = process.env.PORT || 8080;
+
+   app.listen(port, () => {
+     console.log(`Server is up on port ${port}.`);
+   });
+   ```
+
+### Task 4: Create the `users` Service
+
+Inside `src/services/users`, create three functions: `authenticate()` and `create()`, which authenticate and create users with JWT authorization tokens respectively, and `find()` which retrieves a user by `id` or `email`:
+
+```js:title=src/services/users.js
+require("dotenv").config();
+const bcrypt = require("bcrypt");
+const fs = require("fs").promises;
+const jwt = require("jsonwebtoken");
+const path = require("path");
+
+const { JWT_SECRET } = process.env;
+const usersFilePath = path.join(__dirname, "./users.json");
+
+// Authenticate the user and return an authorization token for the user.
+// Use this function to authenticate a user who's logging in.
+const authenticate = async ({ id, email, password }) => {
+  const user = await find({ email });
+  // Hash the user's password and compare the result with the hash
+  // saved in the database to see if the password is correct.
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+
+  // Call jwt.sign(), which returns an authentication token.
+  // The first argument is an object that contains the data to
+  // be embedded in the token. You can pass in a unique identifier for
+  // the user, such as the user's id stored in the database.
+  // The second argument is a string, which could be any random series
+  // of characters used to sign the token to ensure the token has not been tampered with
+  // when it is sent back to the server later on.
+  // The third argument is a configuration object for the token.
+  const token = jwt.sign({ id: user.id }, JWT_SECRET, {
+    expiresIn: 24 * 60 * 60, // Expire tokens after a certain amount of time so users can't stay logged in forever
+  });
+
+  return { token };
+};
+
+// Save the new user to the database and return an authorization token for the user
+const create = async ({ email, name, password }) => {
+  const users = JSON.parse(await fs.readFile(usersFilePath));
+
+  const newUser = {
+    id: users.length + 1, // Not a robust database incrementor; don't use in production
+    email,
+    name,
+    // Here, pass the user's password to bcrypt's hash function to create a hash,
+    // which is stored in the database instead of the user's original password.
+    // Hashing is a one-way operation, so the hash cannot be reversed to its original form.
+    // The first argument is the password to be encrypted, and the second argument
+    // is the number of salt rounds. The higher the number of salt rounds used,
+    // the stronger the resulting hashed password becomes
+    password: await bcrypt.hash(password, 10),
+  };
+
+  // Generate the JWT with jwt.sign. The return value is an
+  // authentication token
+  const token = jwt.sign({ id: newUser.id }, JWT_SECRET, {
+    expiresIn: 24 * 60 * 60, // Expire tokens after a certain amount of time so users can't stay logged in forever
+  });
+
+  users.push(newUser);
+
+  // save the new user to our database
+  await fs.writeFile(usersFilePath, JSON.stringify(users));
+
+  return { token };
+};
+
+const find = async ({ id, email }) => {
+  const users = JSON.parse(await fs.readFile(usersFilePath));
+  return users.find((user) => user.id === parseInt(id) || user.email === email);
+};
+
+module.exports = {
+  authenticate,
+  create,
+  find,
+};
+```
+
+### Task 5: Create the `users` Controller
+
+Imagine if the user is required to provide their login credentials every time they want to access our coveted recipes. This would not be an ideal user experience. Instead, let's have the server issue a JWT to the client when a user signs up for the first time or logs in successfully.
+
+1. Inside `src/controllers/users.js`, add route handlers to handle user signup and login:
+
+   ```js:title=src/controllers/users.js
+   const { create, authenticate } = require("../services/users");
+
+   const handleSignup = async (req, res, next) => {
+    try {
+      const { name, email, password } = req.body;
+      const user = await find({ email });
+
+      if (user) {
+        throw new Error("Email already exists!");
+      }
+      // Create a token for the user
+      const { token } = await create({ name, email, password });
+
+      // Send a token to the client when a user signs up
+      res.json({ token });
+    } catch (error) {
+      next(error);
+    }
+   };
+
+   const handleLogin = async (req, res, next) => {
+      try {
+        const { email, password } = req.body;
+        const user = await find({ email });
+
+        if (!user) {
+          throw new Error("Unable to login");
+        }
+
+        // Create a token for the user, if successfully authenticated
+        const { token } = await authenticate({ email, password });
+        res.json({ token });
+      } catch (error) {
+        next(error);
+      }
+   };
+
+   module.exports = {
+     handleSignup,
+     handleLogin,
+   };
+   ```
+
+After the user signs up initially or logs in successfully, the server returns a token to the client that the client can attach to any future requests that need to be authenticated, so there is no need for the user to provide their login credentials anymore until the token expires.
+
+### Task 6: Create the `users` Router
+
+1. Inside `src/routers/users.js`, route the requests to the appropriate controllers:
+
+   ```js:title=src/routers/users.js
+   const express = require("express");
+   const { handleSignup, handleLogin } = require("../controllers/users");
+   const router = express.Router();
+
+   router.post("/signup", handleSignup);
+   router.post("/login", handleLogin);
+
+   module.exports = router;
+   ```
+
+1. Inside `src/index.js`, mount the user authentication `/api/v1/users` routes, like this:
+
+   ```js:title:src/index.js {6,32}
+   const express = require("express");
+   const path = require("path");
+   const cors = require("cors");
+
+   const recipesRouter = require("./routers/recipes");
+   const usersRouter = require('./routers/users');
+   const { handleError } = require("./utils/error");
+   const auth = require('./middleware/auth.js');
+
+   const app = express();
+
+   app.use(cors());
+
+   app.use((req, res, next) => {
+     const { method, path } = req;
+     console.log(
+       `New request to: ${method} ${path} at ${new Date().toISOString()}`
+     );
+     next();
+   });
+
+   app.use(express.json());
+   app.use(express.urlencoded({ extended: true }));
+
+   app.use(auth.initialize());
+
+   app.get("/", (req, res) => {
+     res.redirect("/api/v1/recipes");
+   });
+
+   app.use("/api/v1/recipes", recipesRouter);
+   app.use("/api/v1/users", usersRouter);
+
+   app.use(handleError);
+
+   const port = process.env.PORT || 8080;
+
+   app.listen(port, () => {
+     console.log(`Server is up on port ${port}.`);
+   });
+   ```
+
+### Task 7 (**_CHALLENGE_**): Secure Routes for the `recipes` Resource
+
+1. You can now make use of the `authenticate()` middleware to restrict access to privileged API operations. For example, to allow only authenticated users to create and save a new recipe to the database, you can pass `auth.authenticate()` as the first argument to the `POST` handler:
+
+   ```diff:title=src/routers/recipes.js
+   + const auth = require('../middleware/auth');
+   ...
+   - router.route('/').get(getAll).post(save);
+   + router.route('/').get(getAll).post(auth.authenticate(), save);
+   ```
+
+   **_CHALLENGE_**: Restrict any `PUT` and `DELETE` routes to authenticated users only.
+
+### Task 8: Test Privileged Routes with Postman
+
+Test your API in Postman to ensure only authorized users can perform mutative database operations!
+
+1. Send a request to the `POST /api/v1/recipes` route (remember to set the `Content-Type` in the Headers tab to `application/json`):
+
+   ![POST request](./post-unauthorized.jpg)
+
+   You should see an `Unauthorized` message if you tried to send the request above.
+
+   Because `POST /api/v1/recipes` is now a protected route, you'd have to sign up for an account first before you can use this route!
+
+1. Send a request to the `POST /api/v1/users/signup` route (remember to set the `Content-Type` in the Headers tab to `application/json`):
+
+   ![POST signup](./post-signup.jpg)
+
+   In the image above, you can see an access token is included in the response. That's our JWT!
+
+   ```json
+   {
+     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNTk0NTIxMDIwLCJleHAiOjE1OTQ2MDc0MjB9.pcdjNFwezYNdZTYjwWndGowLDkhjcl-debci5BLS8AY"
+   }
+   ```
+
+   If you look carefully, you can see that a JWT is made up of three distinct parts separated by a **period (.)**.
+
+   - The first part of the JWT (i.e., `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9`) represents the **_header_**, which is a base64-encoded JSON string. The string contains information about the type of token it is (i.e., JWT) and the algorithm that was used to generate it (i.e., `HS256`)
+
+   - The second part of the JWT (i.e., `eyJpZCI6MiwiaWF0IjoxNTk0NTIxMDIwLCJleHAiOjE1OTQ2MDc0MjB9`) represents the **_payload_** or **_claims_**, which is also a base64-encoded JSON string. The string contains the data that you provided to create the token (i.e., `user.id`, expiry time)
+
+   - The third part of the JWT (i.e., `pcdjNFwezYNdZTYjwWndGowLDkhjcl-debci5BLS8AY`) represents the **_signature_**, which is used to securely validate the token and is calculated using the encoded header, encoded payload, secret, and the algorithm specified in the header; this signature can only be created by somebody in possession of all four pieces of information.
+
+   Head over to [base64decode.org](https://www.base64decode.org/) to decode the token you received from the server:
+
+   ![JWT Decoded](./jwt-decoded.jpg)
+
+   As you can see, a JWT is not encrypted, so anybody who steals the token can still read its contents, so be careful not to put sensitive information in the payload.
+
+   It's hard to tamper with a JWT, as long as the secret used for the signature is kept private. You use the exact same secret that the token was created with to validate it.
+
+   Check the `db/users.json` file. You should see your data, including the hashed password, in the file.
+
+1. Send a request to the `POST /api/v1/recipes` route again, this time attaching the token to the Authorization headers as a Bearer Token, like this:
+
+   ![POST authorized](./post-authorized.jpg)
+
+   You should see a `201 Created` message indicating successful recipe creation!
+
+1. Test the `PUT` and `DELETE` routes, to make sure that you are able to perform these operations as long as your request contains the token.
+
+### BONUS: Logout
+
+A detailed discussion of token invalidation is outside the scope of this course. Take a look at [this article](https://hasura.io/blog/best-practices-of-using-jwt-with-graphql/#logout) if you're interested in learning more!
+
+## Additional Resources:
+
+- [JSON Web Token Wikipedia](https://en.wikipedia.org/wiki/JSON_Web_Token)
+- [JWT Authentication](https://blog.logrocket.com/jwt-authentication-best-practices/)
+- [Session-Based Authentication](https://auth0.com/docs/sessions)
+- [REST Architecture](https://restfulapi.net/)
+- [Pros & Cons of JWTs](https://fusionauth.io/learn/expert-advice/tokens/pros-and-cons-of-jwts)
+- [The Complete Guide to JSON Web Tokens](https://blog.angular-university.io/angular-jwt/)
+- [The JWT Handbook](https://assets.ctfassets.net/2ntc334xpx65/o5J4X472PQUI4ai6cAcqg/13a2611de03b2c8edbd09c3ca14ae86b/jwt-handbook-v0_14_1.pdf)
+
+## Review
+
+Take a moment to reflect on what you’ve learned in this tutorial and answer the following questions:
+
+- What is Passport.js?
+
+- What is a JWT? Why are JWTs useful for implementing RESTful architectures?
+
+- How can you secure user passwords that are stored in the database?
+
+## Key takeaways
+
+- Passport.js is an authentication middleware for Node.js. It offers a wide variety of authentication mechanisms, known as "strategies", as individually-packaged modules.
+
+- In REST architectures, client-server interactions are typically stateless. The server does not store any history or state about the client session. JWT (JSON Web Tokens) is a lightweight and secure approach to transferring state from the client to the server in a REST framework. JWT (pronounced "JOT") relies on the exchange of encoded and crytopgraphically signed JSON strings between client and server.
+
+- A user's password is typically hashed (using a library like `bcrypt`) before being stored in the database, for security reasons.
+
+## What’s next?
+
+In Part 6, you’ll learn how to build a live game using Express and Socket.io.
+
+### [Continue to Part 6](/blog/introduction-to-node-js-part-vi-building-a-live-trivia-game-with-socket-io)
+
+## Want more content like this? [Subscribe](/subscribe) to get the latest updates in your inbox
+
+## Share your feedback
+
+What did you like or didn't like about this post? Let me know what worked well and what can be improved. Your feedback is much appreciated!
+
+import FeedbackForm from "../../../../src/components/feedback";
+
+<FeedbackForm />

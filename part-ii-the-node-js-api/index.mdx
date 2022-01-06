@@ -1,0 +1,368 @@
+---
+title: Introduction to Node.js Part II - The Node.js API
+date: 2021-08-16
+description: Node.js offers a large collection of built-in modules. In this tutorial, learn how to access and interact with the file system and Node.js processes using built-in Nodejs modules.
+tags:
+  - Node.js
+  - JavaScript
+  - intermediate
+  - tutorial
+  - intro-to-node-js
+slug: blog/introduction-to-node-js-part-ii-the-node-js-api
+---
+
+## Introduction
+
+Welcome to the **second** part of the six-part [Introduction to Node.js tutorial series](/blog/introduction-to-node-js-tutorial-series-overview). By the end of this tutorial, you will be able to use:
+
+- `fs` module to access and interact with the file system
+- `process` module to interact with the current Node.js process
+
+## Tutorial Outline
+
+- Node.js API Overview
+- Set Up
+- `fs` Module Overview
+  - Load the `fs` Module
+  - Inspect File Details - `fs.stat`
+  - Read the Contents of a File - `fs.readFile`
+  - Challenge: Write to a File
+  - Challenge: Append to a File - `fs.appendFile`
+  - Node.js Streams
+  - Working with Folders
+- `process` Module Overview
+  - Access CLI Arguments - `process.argv`
+  - Access Node.js Environment Variables - `process.env`
+- Additional Resources
+- Review
+- Key Takeaways
+- What's next
+
+## Node.js API Overview
+
+Let's get started with Node.js by exploring its module system!
+
+The module system allows you to load built-in Node.js modules as well as third-party libraries into your application to perform various tasks, including, but not limited to:
+
+- creating web servers,
+- manipulating the file system,
+- making HTTP requests,
+- connecting to a database,
+- and more!
+
+In this section, you will explore two popular, widely-used built-in Node.js modules, namely [`process`](https://nodejs.org/api/process.html) and [`fs`](https://nodejs.org/api/fs.html).
+
+In a future tutorial, you will also apply the `http` and `https` modules to create web servers, make HTTP requests, and perform other networking tasks!
+
+## Set Up
+
+1.  Inside `intro-to-nodejs-course`, create a subfolder called `nodejs-api` and change into it:
+
+    ```sh
+    $ mkdir nodejs-api
+    $ cd nodejs-api
+
+    ```
+
+1.  Inside `nodejs-api`, create these files: `file-system.js`, `process.js`, and `test.txt`.
+
+    ```sh
+    $ touch file-system.js process.js test.txt
+    ```
+
+1.  Copy and paste some dummy text into `test.txt`, which is the file we will interact with for this lesson.
+
+<details>
+  <summary>Copy & paste this dummy text</summary>
+
+```text
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque ac sodales turpis, dignissim consequat massa. Aliquam vitae fermentum nisl. Etiam sit amet velit ullamcorper, aliquet leo non, varius nisi. Fusce vulputate venenatis magna sit amet tempor. Aliquam vestibulum faucibus sapien et cursus. Quisque venenatis vulputate viverra. Donec velit felis, fermentum nec fringilla ac, sagittis ac neque. Aenean in nisi ac nibh luctus blandit a et dolor. Praesent at lacinia ex. Morbi eros diam, rutrum vitae pellentesque id, cursus non eros. Integer consequat augue eu viverra dapibus. Cras gravida, tortor a eleifend egestas, tellus dui viverra mi, pharetra pretium velit erat malesuada erat. Praesent vitae eros feugiat, imperdiet ex eu, vulputate libero. Ut tempus sagittis dolor, ut consectetur erat convallis eget.
+
+Duis tempor ornare neque id tincidunt. Quisque vehicula lacinia elit, ut suscipit magna ullamcorper dapibus. Phasellus feugiat et nisl non malesuada. Suspendisse imperdiet ultrices elit, et euismod lectus scelerisque non. Suspendisse eu dui turpis. Morbi sed tortor porttitor, lacinia purus vitae, gravida erat. Nunc id massa fringilla, tristique lectus et, consectetur tortor. Phasellus blandit bibendum erat, quis cursus enim iaculis quis. Quisque porta vel sem sit amet pharetra. Maecenas vel risus nec nisi imperdiet pharetra et accumsan diam. Nam id vulputate nunc.
+
+Curabitur tincidunt lectus vitae turpis sollicitudin euismod. Nulla quis diam vulputate, interdum orci eu, faucibus ante. Donec mi purus, tincidunt nec pellentesque ac, ornare at neque. Donec vitae tortor dolor. Mauris vel tempus augue, in pulvinar metus. Proin tincidunt lacus at hendrerit hendrerit. Donec nec ante nec dui semper lacinia quis id lectus. Pellentesque malesuada vulputate ante, sed sollicitudin sapien aliquet quis. Nam maximus, elit ullamcorper blandit dapibus, justo velit posuere velit, vel pharetra velit justo non lacus. Suspendisse vitae vestibulum enim, sit amet sagittis metus. Ut vitae sagittis sem. Suspendisse dictum feugiat risus.
+
+Nam consequat urna nulla, vitae volutpat nunc tempor et. Quisque sit amet interdum nunc, sit amet elementum eros. Sed id velit quis ipsum luctus pulvinar nec vel turpis. Nunc convallis tempor nunc, sit amet posuere mi tincidunt a. Aliquam vel neque finibus, feugiat nunc non, pharetra lectus. Ut in imperdiet quam. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Aenean bibendum, purus sed viverra vehicula, ligula leo eleifend tellus, a consequat ligula elit eget ante. In vehicula orci pulvinar, porttitor elit quis, viverra libero. Phasellus quis tortor ultrices, volutpat elit a, finibus neque. Donec scelerisque ut diam a placerat.
+
+Vestibulum pellentesque interdum lorem at aliquam. Praesent blandit ex ac venenatis sodales. In hac habitasse platea dictumst. Duis sed est nec ex gravida tempus. Sed ac ante sit amet sapien maximus elementum. Vestibulum vel leo erat. Vestibulum eget sapien in nunc tincidunt dictum eu quis velit. Integer commodo, felis eu commodo tincidunt, leo dolor pulvinar neque, in faucibus arcu magna ac eros. In ipsum sem, ullamcorper in pretium id, luctus at dolor. Proin vitae lorem felis. Nullam facilisis, lectus id pharetra sollicitudin, lorem velit hendrerit mauris, commodo dapibus tortor arcu a sem. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nulla id turpis vel ante faucibus tristique nec eu turpis. Sed tempor, nibh ac egestas sollicitudin, dui risus sagittis neque, quis dapibus risus ipsum quis risus.
+```
+
+</details>
+
+You're all set!
+
+## `fs` Module Overview
+
+The `fs` module is a built-in global Node.js module that exposes an API for accessing, manipulating, and interacting with the file system.
+
+You will use a few methods from the `fs` module to read and write information to `test.txt`.
+
+All `fs` operations are available either in the [synchronous or asynchronous forms](https://nodejs.org/api/fs.html#fs_file_system).
+
+In this tutorial series, you'll be using a newer feature of `fs`, the [`fs` Promises API](https://nodejs.org/api/fs.html#fs_fs_promises_api), which returns `Promise` objects so that you can use the `async`/`await` keywords instead of callbacks to handle asynchronicity.
+
+You can access the API by importing it at the top of the file via `require('fs').promises`.
+
+### Load the `fs` Module
+
+The module system uses the `require` function to load in a module and get access to its contents.
+
+To load in the `fs` module and get access to its properties and methods, `require` the module at the top of the file:
+
+```js:title=nodejs-api/file-system.js
+const fs = require("fs").promises;
+```
+
+### Inspect File Details - `fs.stat()`
+
+Every file comes with a set of information (e.g., size, creation time, etc.) we can inspect with [`fs.stat`](https://nodejs.org/api/fs.html#fs_fs_stat_path_options_callback). You can use the output of `fs.stat()` to perform common programming tasks, such as checking whether or not the path resolves to a file or a directory.
+
+Add the following code right below the `fs` module `require()` function:
+
+```js:title=nodejs-api/file-system.js
+const getStats = async (path) => {
+  try {
+    // Pass in the file path
+    const stats = await fs.stat(path);
+    console.log(stats);
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+getStats("./test.txt");
+```
+
+`getStats()` accepts a file path as an argument and calls the `fs.stat()` method using the `async`/`await` pattern. If the `fs.state()` call is successful, then the file stats are logged to the console. Otherwise, an error is logged.
+
+In the `nodejs-api` directory, run the script using the command: `$ node script.js`
+
+What do you see?
+
+You can call special methods on the `stats` object to obtain further information about the object. For example, `.isFile()` and `.isDirectory()` check whether a given file path led to a file or a directory, respectively. To better understand how they work, modify `getStats()`, like this:
+
+```diff
+const getStats = async path => {
+  try {
+    const stats = await fs.stat(path);
+    console.log(stats);
++    console.log(`isFile: ${stats.isFile()}`);
++    console.log(`isDirectory: ${stats.isDirectory()}`);
+
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+getStats('./test.txt');
+```
+
+You will see the `isFile: true` and `isDirectory: false` being logged to the console since `./test.txt` leads to a file.
+
+When you're done, don't forget to comment out `getStats('./test.txt')` so that you can keep the console clear when testing out the remaining `fs` methods.
+
+### Read the Contents of a File - `fs.readFile()`
+
+You can read a file with [`fs.readFile()`](https://nodejs.org/api/fs.html#fs_filehandle_readfile_options). This method accepts two arguments: a file path and a character encoding type (i.e., `utf8`).
+
+Add the following code:
+
+```js:title=nodejs-api/file-system.js
+const readFile = async (path) => {
+  try {
+    const contents = await fs.readFile(path, "utf8");
+    console.log(contents);
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+readFile("./test.txt");
+```
+
+In the `nodejs-api` directory, run the script using the command: `$ node script.js`
+
+What do you see?
+
+### **_Challenge: Write to a File_**
+
+Implement a `writeFile()` function that asynchronously writes data to `test.txt`, replacing all existing data with new data passed to `writeFile()`.
+
+Use the [documentation](https://nodejs.org/api/fs.html#fs_fs_promises_api) to find the appropriate `fs` method for this operation.
+
+After writing to `test.txt` with your function, check the contents of `test.txt` from your code editor. What do you see?
+
+<details>
+  <summary>
+    SOLUTION
+  </summary>
+
+https://nodejs.org/api/fs.html#fs_filehandle_writefile_data_options
+
+```js:title=nodejs-api/file-system.js
+const writeFile = async (path, data) => {
+  try {
+    await fs.writeFile(path, data);
+  } catch (error) {
+    console.error(error);
+  }
+};
+writeFile("./test.txt", "hello world");
+```
+
+</details>
+
+### Challenge: Append to a File - `fs.appendFile()`
+
+Implement a `appendFile()` function that asynchronously appends data to the end of the `test.txt` file.
+
+Use the [documentation](https://nodejs.org/api/fs.html#fs_fs_promises_api) to find the appropriate `fs` method for this operation.
+
+After appending to `test.txt` with your function, check the contents of `test.txt` from your code editor. What do you see?
+
+<details>
+  <summary>
+    SOLUTION
+  </summary>
+  
+https://nodejs.org/api/fs.html#fs_filehandle_appendfile_data_options
+
+```js:title=nodejs-api/file-system.js
+const appendFile = async (path, data) => {
+  try {
+    await fs.appendFile(path, data);
+  } catch (error) {
+    console.error(error);
+  }
+};
+appendFile("./test.txt", "appending another hello world");
+```
+
+</details>
+
+### Node.js Streams
+
+The `fs` methods above load the full content of `test.txt` in memory before manipulating the content. As a result, huge files will have an adverse impact on your program's memory efficiency and speed of execution.
+
+In this case, a better option is to access the file content using [streams](https://nodejs.org/api/stream.html#stream_stream). Streams are a way to handle and process data in smaller chunks, without loading all the data in memory.
+
+You won't be using streams extensively for this tutorial, but you can read and learn about the Node.js Stream Module [here](https://nodejs.dev/learn/nodejs-streams).
+
+### Working with Folders
+
+The tutorial won't go into detail on folder manipulation, but take a look [at this guide](https://nodejs.dev/learn/working-with-folders-in-nodejs) if you're interested.
+
+## `process` Module Overview
+
+The [`process`](https://nodejs.org/api/process.html) object provides information about and allows the program to interact with the current Node.js process.
+
+`process` is a global object, so it can be accessed from anywhere inside your Node.js applications without using `require()`.
+
+Now you will take a look at a few common `process` properties, such as `.argv` and `.env`.
+
+### Access CLI Arguments - `process.argv`.
+
+[`process.argv`](https://nodejs.org/api/process.html#process_process_argv) allows you to access the values passed into the application from the command-line. It stores the values in an array.
+
+1. Add the following code:
+
+   ```js:title=nodejs-api/process.js
+   const name = process.argv[2];
+   console.log(process.argv);
+   console.log(`Hi, I'm ${name}!`);
+   ```
+
+1. In the `nodejs-api` folder, run `process.js`, passing in your name as an argument:
+
+   ```sh
+   $ node process.js Hou
+   ```
+
+   What do you see?
+
+   The `argv` property consists of an array of all the command line invocation arguments.
+
+   The first element (i.e., `process.argv[0]`) is the full path of the node command.
+
+   The second element (i.e., `process.argv[1]`) is the full path of the file being executed.
+
+   The third elements and beyond consist of the additional arguments passed from the command line. Node.js accepts any number of arguments from the command line.
+
+1. Try passing in a `location` argument.
+
+   ```diff:title=nodejs-api/process.js
+   const name = process.argv[2];
+   console.log(process.argv);
+   + const location = process.argv[3];
+   - console.log(`Hi, I'm ${name}!`);
+   + console.log(`Hi, I'm ${name}! I live in ${location}`);
+   ```
+
+You can use libraries like [yargs](http://yargs.js.org/) or [minimist](https://www.npmjs.com/package/minimist) to parse more complex arguments (e.g., `$ node process.js name=Hou location=Brooklyn`)
+
+### Access Node.js Environment Variables - `process.env`.
+
+Environment variables allow you to configure your applications in different environments. For example, you could set an environment variable to connect your test server to the test database. In Node.js, these variables can be accessed via `process.env`.
+
+Log the `process.env` property to the console, like this:
+
+```js:title=nodejs-api/process.js
+console.log("process.env:", process.env);
+```
+
+What do you see? It logs an object containing all the environment variables for the Node.js process.
+
+Log `process.env.NODE_ENV` to the console:
+
+```js:title=nodejs-api/process.js
+console.log("process.env.NODE_ENV: ", process.env.NODE_ENV);
+```
+
+You should get `process.env.NODE_ENV: undefined`.
+
+Let's set a custom environment variable from the command-line:
+
+```
+$ NODE_ENV=development node process.js Hou Brooklyn
+```
+
+What gets logged to the console now?
+
+## Additional Resources:
+
+- [Node.js Buffers](https://nodejs.dev/learn/nodejs-buffers)
+- [`process.exit()`](https://nodejs.dev/learn/how-to-exit-from-a-nodejs-program)
+
+## Review
+
+Take a moment to reflect on what you’ve learned in this tutorial and answer the following questions:
+
+- What would you use the `fs` or `process` module for?
+
+- How would you access environment variables attached to a Node.js process?
+
+- How would you access arguments passed to a Node.js application from the command line?
+
+## Key takeaways
+
+- You can use the `fs` module for accessing, manipulating, and interacting with the file system. You can use the `process` object to access information about and interact with the current Node.js process. Both of these are built-in global Node.js modules.
+
+- You can use `process.env` to access the environment variables attached to a Node.js process.
+
+- `process.argv` allows you to access the values passed into the application from the command-line.
+
+## What’s next?
+
+Now you know how the Node.js API works and how to access and interact with the file system and Node.js processes using special Node.js libraries. In Part 3, you’ll review several essential JavaScript concepts (e.g., arrow function syntax,`let`/`const`, object destructuring, spread and rest operator syntax, etc.) that are needed to succeed in the Introduction to Node.js tutorial series.
+
+### [Continue to Part 3](/blog/introduction-to-node-js-part-iii-javascript-essentials-review)
+
+## Want more content like this? [Subscribe](/subscribe) to get the latest updates in your inbox
+
+## Share your feedback
+
+What did you like or didn't like about this post? Let me know what worked well and what can be improved. Your feedback is much appreciated!
+
+import FeedbackForm from "../../../../src/components/feedback";
+
+<FeedbackForm />

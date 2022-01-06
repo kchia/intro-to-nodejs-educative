@@ -1,0 +1,345 @@
+---
+title: Introduction to Node.js Part I - Node.js Overview
+date: 2021-08-16
+description: Node.js is a JavaScript runtime built on Chrome's V8 JavaScript engine. In this tutorial, learn how Node.js is different from the browser, the difference between blocking and non-blocking patterns in Node.js, the Node.js REPL environment, and Node.js debugging tools.
+tags:
+  - Node.js
+  - JavaScript
+  - intermediate
+  - tutorial
+  - intro-to-node-js
+slug: blog/introduction-to-node-js-part-i-node-js-overview
+---
+
+## Introduction
+
+Welcome to the **first** part of the six-part [Introduction to Node.js tutorial series](/blog/introduction-to-node-js-tutorial-series-overview). By the end of this tutorial, you will:
+
+- Be able to explain what Node.js is and how it's different from the browser
+- Understand the difference betweeen blocking versus non-blocking patterns in Node.js
+- Use the Node.js REPL environment
+- Use basic Node.js debugging tools
+
+## Tutorial Outline
+
+- Node.js Overview
+  - What is Node.js?
+  - Node.js Uses the V8 JavaScript Engine
+  - Node.js versus the Browser
+  - Node.js Motivation
+    - Blocking Code
+    - Non-Blocking Code
+    - Non-Blocking Code Benefits
+    - Node.js Case Studies
+- Exploring the Node.js REPL Environment
+- Setup Course Folder & Test File
+- Debugging Node.js Applications Effectively
+- Debugging with an Integrated Development Environment (IDE)
+- Debugging with Chrome DevTools
+- Additional Resources
+- Review
+- Key Takeaways
+- What's next
+
+## Node.js Overview
+
+### What is Node.js?
+
+According to the [official website](https://nodejs.org/en/),
+
+```
+Node.js® is a JavaScript runtime built on Chrome's V8 JavaScript engine.
+```
+
+Node.js enables JavaScript to run outside of the browser. It can be used to build server-side applications that can handle high traffic volumes efficiently.
+
+Node.js is portable, meaning it can run on a variety of operating systems, including Mac, Windows, Linux and several other systems. It is also a free and open-sourced technology.
+
+Node.js was first released in 2009 by a programmer named Ryan Dahl.
+
+### Node.js uses the **V8** JavaScript Engine
+
+A JavaScript Engine is a program that compiles JavaScript to machine code that the operating system can understand.
+
+**V8** is the name of the JavaScript Engine that powers Node.js. Created by Google and open-sourced since 2008, **V8** powers the Google Chrome browser today. It is written in C++.
+
+One benefit of using Node.js is that it benefits from Google's investment in **_V8_**'s [improved performance year after year](https://V8.dev/blog/10-years).
+
+Besides **V8**, examples of other JavaScript Engines include [SpiderMonkey](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey)(Firefox) and [Chakra](<https://en.wikipedia.org/wiki/Chakra_(JScript_engine)>)(Edge).
+
+### Node.js versus the Browser
+
+Before the advent of Node.js, JavaScript could only run in the browser, and its primary purpose was to create browser interactions (e.g., adding click events). Node.js allows us to write JavaScript in the server to perform common server tasks, such as accessing the file system and connecting to databases.
+
+However, while Node.js and browsers like Chrome both execute Javascript and use the same **V8** JavaScript engine, there are a few key differences between them:
+
+| Browser                                           | Node.js                                                               |
+| ------------------------------------------------- | --------------------------------------------------------------------- |
+| Access to `document` and `window` objects         | Access to `http`, `fs` objects                                        |
+| `global` object references the `window`           | `global` object references Node.js-specific modules                   |
+| Uses ECMAScript modules (i.e., `import`,`export`) | Uses the CommonJS module system (i.e., `require()`, `module.exports`) |
+
+Nowadays, JavaScript has proven to be among one of the most popular programming languages. If you're a developer who extensively uses Javascript, then Node.js offers a huge advantage - which is the ability to program your entire application - frontend and backend - in a single language.
+
+However, while Node.js and browsers like Chrome both execute Javascript and use the same **V8** JavaScript engine, there are a few key differences between them:
+
+- While Node.js and browsers share several common built-in JavaScript features (e.g., `Array`), there are several predefined objects that exist in one environment but not in the other. For example, Node.js does not have access to the `document` and `window` objects, which are used on the client-side for Document Object Model (DOM) manipulation and user event handling. The browser, on the other hand, does not have access to Node.js API's such as `http` and `fs`, which are needed for setting up web servers and manipulating file systems, respectively.
+
+- Both have access to a `global` object. In the browser, the `global` object references the `window` object. In Node.js, however, the `global` object exposes a collection of useful modules, functions, and strings that we can use in our programs.
+
+- Node.js uses the CommonJS module system, which uses `require()` and `module.exports`, to share code between different files. In the browser, we are starting to see the ECMAScript modules standard, which uses the `import` and `export` statements, being implemented. As of October 2020, ECMAScript modules is still an experimental feature only in Node.js.
+
+### Node.js Motivation
+
+Prior to the release of Node.js, there were major issues with popular servers, such as the Apache HTTP server, at that time that made it difficult to create scalable applications.
+
+For example, the Apache HTTP server had trouble handling a high volume of concurrent requests. It would create a separate thread for each network request, which led to tremendous resources being consumed during periods of high website traffic. An increase in traffic beyond the server's capacity would cause Apache to start dropping additional requests, leading to a poor customer experience.
+
+The Apache HTTP server also implemented "blocking code", which meant a program had to wait for a current task to finish and release its resources before the program could proceed with the next task.
+
+Node.js was created to solve these problems.
+
+#### Blocking Code
+
+To understand why Node.js is an excellent choice for creating scalable network applications, we must first understand **_blocking_** and **_non-blocking_** code as they relate to Node.js' `I/O` operations.
+
+`I/O` stands for input/output, which is needed whenever a Node.js app is communicating with the server it's running on (e.g., reading some data from a file on the file system) or some other server (e.g., querying the database, reading from the network).
+
+Blocking methods execute **_synchronously_**. Suppose an application has the following code to read a file:
+
+```js
+// Load the file system module
+const fs = require("fs");
+
+// While waiting for the file to be read, can't do anything else!
+const data = fs.readFileSync("/file.md", "utf-8");
+console.log(data);
+
+// Will only run after the console.log on the previous line
+doMoreStuff();
+```
+
+The example above is synchronous.
+
+`const data = fs.readFileSync("/file.md", "utf-8");` will block the execution of any additional JavaScript (e.g., `doMoreStuff()`) until the entire `/file.md` file is read.
+
+If an error is thrown, it will need to be caught or the process will crash.
+
+While separate threads could be used to handle multiple tasks concurrently, spawning a new thread for each task is expensive in terms of memory and CPU usage. As number of threads increase, so does memory usage. Multi-threaded applications also result in increased complexity (e.g., multiple threads accessing shared data)
+
+Enter non-blocking code.
+
+#### Non-Blocking Code
+
+Non-blocking methods execute **_asynchronously._**
+
+And here is the **_asynchronous_** version of the file read operation from the previous section:
+
+```js
+// Load the file system module
+const fs = require("fs");
+
+// Pass a callback function as a third argument
+fs.readFile("/file.md", "utf-8", (err, data) => {
+  if (err) throw err;
+  console.log(data);
+});
+
+// Will run before console.log
+doMoreStuff();
+```
+
+In the asynchronous version,
+
+- `fs.readFile()` is non-blocking so JavaScript execution can continue and `doMoreStuff()` will be called before `fs.readFile()` has finished running
+- You can pass a callback as a third argument to `fs.readFile()`. During program execution, this callback function gets sent to a callback queue; the callback function only gets invoked when the file read is finished.
+  - This ability to register a callback in an asynchronous call is what makes Node.js **event-driven**.
+  - You can handle any errors in this callback; the first argument of this callback gives us access to the error object (i.e., error-first callback).
+
+#### How does JavaScript know to run a callback function asynchronously?
+
+Because of something running behind the scenes called the [Event Loop](https://nodejs.org/en/docs/guides/event-loop-timers-and-nexttick/)!
+
+A detailed discussion of the Event Loop is outside the scope of this tutorial, but here's an excellent [video](https://www.youtube.com/watch?v=8aGhZQkoFbQ) about the event loop.
+
+This mechanism helps the program invoke the callback function when the main function has finished function.
+
+The Event Loop is neither part of the **_V8_** JavaScript Engine nor is it part of the JavaScript language. It is implemented by a library called [`libuv`](https://github.com/libuv/libuv) within Node.js.
+
+#### Non-Blocking Code Benefits
+
+Non-blocking paradigms allow Node.js to process other code or make other requests while waiting for a response from some long-running operations (e.g., network requests).
+
+A Node.js app is capable of handling higher throughput and thousands of concurrent connections while processing multiple requests at the same time in a single thread, without having to create a new thread for every request.
+
+For this reason, Node.js libraries are normally created using non-blocking paradigms.
+
+However, Node.js is not a suitable choice for CPU-intensive and heavy computing workloads (e.g., video transcoding, graphics processing, sort a billion users), since CPU tasks are **_not_** executed asynchronously and will block the single Node.js thread, causing the application to be unresponsive.
+
+#### Node.js Case Studies
+
+Here are a few case studies of how different companies have used Node.js to scale their applications:
+
+- [The Evolution of Node.js at Netflix](https://openjsf.org/blog/2020/09/24/from-streaming-to-studio-the-evolution-of-node-js-at-netflix/)
+- [How Node.js Saved the US Government \$100k](https://openjsf.org/blog/2020/09/11/how-node-js-saved-the-u-s-government-100k/)
+- [How the Weather Company uses Node.js in Production](https://openjsf.org/blog/2020/05/27/how-the-weather-company-uses-node-js-in-production/)
+- [Node.js PayPal](https://medium.com/paypal-engineering/node-js-at-paypal-4e2d1d08ce4f)
+- [Building with Node.js at LinkedIn](https://medium.com/building-with-x/building-with-node-js-at-linkedin-ae4ea6af12f2)
+- [Designing Edge Gateway, Uber's Lifecycle Management Platform](https://eng.uber.com/gatewayuberapi/)
+- [Other Case Studies](https://thinkmobiles.com/blog/node-js-app-examples/)
+
+## Exploring the Node.js REPL Environment
+
+When Node.js is installed, you'll have access to the node executable program in the terminal.
+
+1. Open up your terminal.
+
+1. Type `node` into your terminal. This will open up a `REPL` or Read-Evaluate-Print-Loop where we can run individual node statements using JavaScript. The command stays in idle mode, waiting for us to input code.
+
+1. Core JavaScript features we're familiar with in the browser like `toUpperCase()` are still available in Node.js. Try running the following with `REPL`:
+
+   ```js
+   "hello world".toUpperCase(); // returns 'HELLO WORLD'
+   ```
+
+1. Try entering the name of a JavaScript class, like `Number`, add a dot and press tab. The REPL will print all the properties and methods you can access on that class. Try running some of these methods and properties (e.g., `Number.MAX_VALUE`).
+
+1. Inspect the global objects you have access to by typing `global.` and pressing tab. What do you see? Which of these global objects are you familiar with from browser-based JavaScript?
+
+1. To exit REPL mode, simply type `.exit` or hit `CTRL + c` twice.
+
+## Setup Course Folder & Test File
+
+Create a folder where you will save your work for this course.
+
+You can call this folder `intro-to-nodejs-course`.
+
+1. Navigate to your home directory:
+
+   ```sh
+   $ cd ~
+   ```
+
+1. Create a new folder called `intro-to-nodejs-course` and change into it:
+
+   ```sh
+   $ mkdir intro-to-nodejs-course
+   $ cd intro-to-nodejs-course
+   ```
+
+1. Create a script file in your course directory:
+
+   ```sh
+   $ touch script.js
+   ```
+
+1. Add a `console.log` message to the `script.js` file:
+
+   ```js:title=script.js
+   console.log("hello world");
+   ```
+
+1. Run the script from terminal:
+
+   ```sh
+   $ node script.js
+   ```
+
+What do you see?
+
+## Debugging Node.js Applications Effectively
+
+Many developers use `console.log` to debug their Node.js applications. This technique is great for dumping a variable to the terminal so you can check its value or figuring out what order your code is running in. However, it is not really the best option.
+
+Using `console.log` to debug your code generally slows down the development process, as you'd have to repeatedly stop your app, insert a `console.log`, and start your app again. Also, it complicates the debugging process as you're trying to log out the values you're debugging amidst the noise of other logging operations.
+
+### Debugging with an Integrated Development Environment (IDE)
+
+VSCode makes it really easy to start a debugging environment for our Node.js application! Let's take a look at an example.
+
+1. In your `script.js`, add the following code:
+
+   ```js:title=script.js
+
+   let count = 5;
+   // the setInterval() function invokes the callback every 1000 milliseconds
+   const countDown = setInterval(() => {
+     console.log(`counting down ${count}`);
+     count--;
+
+     if (count < 0) {
+       console.log("Time's up!");
+
+       // clears the timer when the count is negative
+       clearInterval(countDown);
+     }
+   }, 1000);
+   ```
+
+1. If you're using VSCode, hit `Command + Shift + D` to launch the debugger. Select Node.js as the environment. Set a breakpoint by clicking to the left of the `count--` line.
+
+   ![Setting a breakpoint in VSCode debugger](./breakpoint.jpg)
+
+1. Next, press the `Run and debug` button on the left side of the window. The application automatically stops at the breakpoint you just set. You can start stepping through the code to observe how the `count` variable changes during code execution!
+
+### Debugging with Chrome DevTools
+
+Developers often use the Chrome DevTools to debug client-side JavaScript code. Since Chrome and Node.js share the same **V8** JavaScript engine, it is also possible to use the Chrome DevTools for debugging and profiling your applications.
+
+Chrome DevTools gives you access to the profiler, stack visualization information, code navigation features, and a very cool debugger. A [debugger](https://nodejs.org/api/debugger.html) is automatically bundled with your Node.js installation.
+
+1. Attach Chrome DevTools to a Node.js instance for debugging! Open your terminal and run
+
+   ```
+   $ node --inspect-brk script.js
+   ```
+
+1. Then in Chrome type this URL: `chrome://inspect`.
+
+1. Click the `inspect` link next to the Node target, and you’ll have access to Node.js in the browser DevTools. You can now insert breakpoints and step through the code!
+
+## Additional Resources:
+
+- [Node.js Wikipedia page](https://en.wikipedia.org/wiki/Node.js)
+- [A Brief History of Node.js](https://nodejs.dev/learn/a-brief-history-of-nodejs)
+- [Node.js ECMAScript Modules](https://nodejs.org/api/esm.html#esm_ecmascript_modules)
+- [Node.js Debugging in VSCode](https://code.visualstudio.com/docs/nodejs/nodejs-debugging)
+- [Getting Started with Node.js Debugging in VSCode (Video)](https://www.youtube.com/watch?v=2oFKNL7vYV8)
+- [Node.js Concurrency](https://tsh.io/blog/simple-guide-concurrency-node-js/)
+- [Node.js Multi-Threading](https://blog.logrocket.com/node-js-multithreading-what-are-worker-threads-and-why-do-they-matter-48ab102f8b10/)
+- [Video: Debugging Node.js with Chrome & Visual Studio Code](https://www.youtube.com/watch?v=hfpkMyvSOp4)
+
+## Review
+
+Take a moment to reflect on what you’ve learned in this tutorial and answer the following questions:
+
+- What is Node.js?
+- What is **_V8_**?
+- What is blocking code? What is non-blocking code? Which pattern allows Node.js to be highly performant?
+- What are the differences and similarities between Node.js and the browser?
+
+## Key takeaways
+
+- Node.js is a JavaScript runtime that enables JavaScript to run outside of the browser. It is built on Chrome's V8 JavaScript engine.
+
+- V8 is the name of the JS Engine that powers Node.js. It was created by Google and currently powers Google Chrome.
+
+- Blocking code executes synchronously, or one line after the after. Non-blocking code executes asynchronously, so JavaScript execution can continue while an earlier task is ongoing. Non-blocking paradigms allow Node.js to process other code or make other requests while waiting for a response from some long-running operations (e.g., network requests).
+
+- While Node.js and browsers share several common built-in JavaScript features (e.g., Array), there are several predefined objects that exist in one environment but not in the other. For example, Node.js does not have access to the document and window objects that are available in the browser. While both have access to a global object, in the browser, the `global` object references the `window` object. In Node.js, however, the `global` object exposes a collection of useful modules, functions, and strings that we can use in our programs.
+
+## What’s next?
+
+Now that you understand the basics of working within the Node.js environment, it’s time to learn about Node's built-in libraries. In Part 2, you’ll learn how to access and interact with the file system and Node.js processes using special Node.js packages.
+
+### [Continue to Part 2](/blog/introduction-to-node-js-part-ii-the-node-js-api)
+
+## Want more content like this? [Subscribe](/subscribe) to get the latest updates in your inbox
+
+## Share your feedback
+
+What did you like or didn't like about this post? Let me know what worked well and what can be improved. Your feedback is much appreciated!
+
+import FeedbackForm from "../../../../src/components/feedback";
+
+<FeedbackForm />

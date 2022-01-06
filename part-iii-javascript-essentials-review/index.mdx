@@ -1,0 +1,144 @@
+---
+title: Introduction to Node.js Part III - JavaScript Essentials Review
+date: 2021-08-16
+description: ECMAScript 2015, also known as ES6, was the second major revision to JavaScript. This tutorial reviews the essential JavaScript concepts (e.g., arrow function syntax,`let`/`const`, object destructuring, spread and rest operator syntax, etc.) needed to succeed in the Introduction to Node.js tutorial series.
+tags:
+  - Node.js
+  - JavaScript
+  - ES6
+  - intermediate
+  - tutorial
+  - intro-to-node-js
+slug: blog/introduction-to-node-js-part-iii-javascript-essentials-review
+---
+
+## Introduction
+
+Welcome to the **third** part of the six-part [Introduction to Node.js tutorial series](/blog/introduction-to-node-js-tutorial-series-overview). By the end of this tutorial, you will be able to:
+
+- Explain the history and significance of ES6
+- Utilize ES6 on the browser and on the server (Node.js)
+- Leverage ES6 features to write more concise and performant JavaScript
+
+This tutorial assumes that you're familiar with basic JavaScript.
+
+## Lesson Outline
+
+- Starter Code
+- ES6 Background
+- ES6 Concepts
+
+  - JavaScript Variables - `var`, `let`, `const`
+    - Variable Update
+    - Variable Scope
+    - Variable Hoisting
+  - Strings
+    - New String Methods
+    - Template Literals
+  - ES6 Functions: Arrow Functions
+  - Destructuring
+    - Destructuring Objects
+    - Destructuring Arrays
+    - Destructuring Parameters
+  - Rest Parameters and Spread Syntax with `...`
+  - Modules
+    - Using Single Exports
+    - Using Multiple Exports
+    - Importing Modules
+    - Using a Module Loader or Bundler
+  - Enhanced Object Literals
+    - Shorthand for initializing property values
+    - Shorthand for writing methods
+    - Computed property key
+  - Asynchronous Programming with `Async`/`Await`
+  - Closures
+
+- Resources
+- Review
+- Key Takeaways
+- What's next
+
+## Starter Code
+
+Before diving into Node.js, let's review several key JavaScript programming concepts that are essential to understanding the rest of the tutorials in this series.
+
+Throughout this tutorial, you will be asked to think about the possible output of running certain code snippets, so make sure to get your favorite code editor or a browser-based IDE like [repl.it](https://repl.it/) or [CodeSandbox](https://codesandbox.io/) ready.
+
+## ES6 Background
+
+[ES6](https://developers.google.com/web/shows/ttt/series-2/es2015), which stands for ECMAScript 6, is the 6th version of ECMAScript. It was published in 2015, so it's also known as ECMAScript 2015. [ECMAScript](https://en.wikipedia.org/wiki/ECMAScript) provides a standard for JavaScript.
+
+Why use ES6? As you will see, it offers more concise and intuitive syntax, including template strings, arrow functions, modules, and classes. Its language features help make code more readable.
+
+Modern web browsers can readily execute ES5, but ES6 doesn’t yet have full browser compatibility yet. To use the complete set of ES6 features today, you will need to transpile (or rewrite) your code back down to ES5 so it can be interpreted by current browsers. Transpiler tools like [Babel](https://babeljs.io/) and [Traceur](https://github.com/google/traceur-compiler) help make this process easier. You can use either tool to transpire ES6 either in the browser or the server.
+
+JavaScript is a [constantly evolving language](https://en.wikipedia.org/wiki/ECMAScript). With each new version of ECMAScript released, improved language features are being introduced to make a developer's life easier.
+
+- [Learn Modern JavaScript: JavaScript Variables - `var`, `let`, and `const`](/blog/learn-modern-js-javascript-variables)
+- [Learn Modern JavaScript: Strings](/blog/learn-modern-js-strings)
+- [Learn Modern JavaScript: Functions](/blog/learn-modern-js-functions)
+  - **_NOTE: The tutorial series uses the arrow function syntax throughout, so it's important to be familiar with this syntax._**
+  - You won't be using `this` extensively in this course but it's good to know how arrow functions handle `this` differently compared to regular functions. In [regular functions](https://www.w3schools.com/js/tryit.asp?filename=tryjs_arrow_function6), the `this` keyword represented the object that called the function, which could be the `window`, the `document`, a button, etc. In [arrow functions](https://www.w3schools.com/js/tryit.asp?filename=tryjs_arrow_function7), there is no binding of `this`. With arrow functions, the `this` keyword always represents the object that defined the arrow function.
+- [Learn Modern JavaScript: Destructuring](/blog/learn-modern-js-destructuring)
+- [Learn Modern JavaScript: Rest & Spread](/blog/learn-modern-js-rest-spread)
+- [Learn Modern JavaScript: Modules](/blog/learn-modern-js-modules)
+- [Learn Modern JavaScript: Enhanced Object Literals](/blog/learn-modern-js-enhanced-object-literals)
+- [Learn Modern JavaScript: Async Programming with `async`/`await`](/blog/learn-modern-js-async-programming-async-await)
+  - **_The tutorial series extensively uses the `async`/`await` pattern so it's important to become familiar with this syntax._**
+- [Learn Modern JavaScript: Closures](/blog/learn-modern-js-closures)
+
+## Resources:
+
+- [A Short & Simple Guide to Babel](https://flaviocopes.com/babel/)
+- [MDN Let](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let)
+- [MDN Const](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/const)
+- [MDN Spread Syntax](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax)
+- [MDN Export](https://developer.mozilla.org/en-US/docs/web/javascript/reference/statements/export)
+- [MDN Import](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import)
+- [MDN Closures](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Closures)
+
+## Review
+
+Take a moment to reflect on what you’ve learned in this tutorial and answer the following questions:
+
+- What are some benefits of using the arrow function?
+
+- What are some differences between `var`, `let` and `const`?
+
+- What is the benefit of using destructuring?
+
+- What does the spread `...` operator do?
+
+- What are ES6 modules?
+
+- What is the benefit of using `async`/`await` to perform asynchronous actions?
+
+## Key takeaways
+
+- Arrow functions were introduced in ES6 and provide a simpler syntax for creating functions along with a more intuitive handling of this. With arrow functions, the this keyword always represents the object that defined the arrow function.
+
+- `var` variables can be updated and re-declared within its scope. `let` variables can be updated but not re-declared within its scope. `const` variables can neither be updated nor re-declared within its scope. `var` is globally or function-scoped, whereas `const` and `let` are blocked-scoped, so a variable declared within a block (e.g., the space in-between of the curly brackets of an `if...else` statement) can only be accessed within that block.
+
+- The destructuring syntax allows you to easily extract data from arrays or objects into separate variables.
+
+- The spread `...` syntax allows you to make a shallow copy of an object.
+
+- Modules allow developers to organize their codebase within separate files or components for better reusability, flexibility, shareability, and overall maintenance. Multiple modules can be composed together to create an application.
+
+- `async`/`await` statements simplify the syntax for making asynchronous calls with JavaScript. They make asynchronous code look like synchronous code. They help us avoid deeply nested promise chains that may quickly lead to messy code.
+
+## What’s next?
+
+Now you are familiar with some of the latest JavaScript ES6 features. In Part 4, you’ll learn how to build a RESTful API using Express, which is a popular server-side framework for building web applications on Node.js.
+
+### [Continue to Part 4](/blog/introduction-to-node-js-part-iv-building-a-restful-api-with-express)
+
+## Want more content like this? [Subscribe](/subscribe) to get the latest updates in your inbox
+
+## Share your feedback
+
+What did you like or didn't like about this post? Let me know what worked well and what can be improved. Your feedback is much appreciated!
+
+import FeedbackForm from "../../../../src/components/feedback";
+
+<FeedbackForm />
